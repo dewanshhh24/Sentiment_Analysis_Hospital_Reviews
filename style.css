@@ -20,6 +20,8 @@
   --green-dim:   rgba(128, 237, 153, 0.3);
   --red:         #ef4444;
   --red-dim:     rgba(239, 68, 68, 0.1);
+  --neutral:     #f59e0b;
+  --neutral-dim: rgba(245, 158, 11, 0.12);
   --amber:       #d97706;
   --text:        #0f172a;
   --muted:       #64748b;
@@ -374,6 +376,7 @@ code { font-family: var(--mono); }
   flex-shrink: 0;
 }
 .result-icon-wrap.positive { background: var(--green-dim); color: var(--green); }
+.result-icon-wrap.neutral  { background: var(--neutral-dim); color: var(--neutral); }
 .result-icon-wrap.negative { background: var(--red-dim);   color: var(--red);   }
 
 .result-details { flex: 1; text-align: left; }
@@ -394,6 +397,7 @@ code { font-family: var(--mono); }
   margin-bottom: 10px;
 }
 .result-sentiment.positive { color: var(--green); }
+.result-sentiment.neutral  { color: var(--neutral); }
 .result-sentiment.negative { color: var(--red); }
 
 .result-confidence-row {
@@ -422,6 +426,7 @@ code { font-family: var(--mono); }
   width: 0%;
 }
 .result-bar.positive { background: linear-gradient(90deg, var(--green-raw), var(--green)); }
+.result-bar.neutral  { background: linear-gradient(90deg, #fcd34d, var(--neutral)); }
 .result-bar.negative { background: linear-gradient(90deg, #fca5a5, var(--red)); }
 
 .result-disclaimer {
@@ -713,6 +718,127 @@ code { font-family: var(--mono); }
 .cm-tp .cm-val, .cm-tn .cm-val { color: var(--green); }
 .cm-fp .cm-val, .cm-fn .cm-val { color: var(--red); }
 .cm-sub { font-size: 0.7rem; color: var(--muted); }
+
+/* ─── 3×3 CONFUSION MATRIX ──────────────────────────────────── */
+.confusion-matrix-3 {
+  min-width: 360px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  font-size: 0.72rem;
+}
+
+.cm3-header-row {
+  display: flex;
+  align-items: flex-end;
+  gap: 6px;
+}
+.cm3-origin { width: 80px; flex-shrink: 0; }
+.cm3-col-group {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 4px;
+}
+.cm3-group-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.cm3-col-labels {
+  display: grid;
+  grid-template-columns: 1fr 1fr 1fr;
+  gap: 6px;
+  width: 100%;
+}
+.cm3-col-label {
+  font-size: 0.68rem;
+  font-weight: 700;
+  text-align: center;
+  padding: 5px 2px;
+  border-radius: 4px;
+}
+
+.cm3-row {
+  display: flex;
+  align-items: stretch;
+  gap: 6px;
+}
+.cm3-row-label {
+  width: 80px;
+  flex-shrink: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: flex-end;
+  justify-content: center;
+  text-align: right;
+  font-size: 0.68rem;
+  font-weight: 700;
+  padding-right: 8px;
+  gap: 2px;
+}
+.cm3-row-group-tag {
+  font-size: 0.6rem;
+  font-weight: 600;
+  letter-spacing: 0.07em;
+  text-transform: uppercase;
+  color: var(--muted);
+  display: block;
+}
+
+/* Label color classes */
+.cm3-pos-label { color: var(--green); }
+.cm3-neu-label { color: var(--neutral); }
+.cm3-neg-label { color: var(--red); }
+
+.cm3-cell {
+  flex: 1;
+  border-radius: var(--radius-sm);
+  padding: 12px 8px;
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 2px;
+  transition: transform var(--transition);
+}
+.cm3-cell:hover { transform: scale(1.03); }
+
+/* Diagonal (correct predictions) */
+.cm3-diag {
+  background: rgba(22, 163, 74, 0.08);
+  border: 1px solid rgba(22, 163, 74, 0.22);
+}
+.cm3-diag .cm3-cell-val { color: var(--green); }
+
+/* Off-diagonal (misclassifications) */
+.cm3-off {
+  background: rgba(239, 68, 68, 0.05);
+  border: 1px solid rgba(239, 68, 68, 0.14);
+}
+.cm3-off .cm3-cell-val { color: var(--red); }
+
+.cm3-cell-tag {
+  font-size: 0.6rem;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: var(--muted);
+}
+.cm3-cell-val {
+  font-size: 1.1rem;
+  font-weight: 700;
+  font-variant-numeric: tabular-nums;
+  line-height: 1;
+}
+.cm3-cell-sub {
+  font-size: 0.6rem;
+  color: var(--muted);
+  line-height: 1.2;
+}
 
 /* ─── WORDCLOUD ──────────────────────────────────────────────── */
 .wordcloud-wrap { padding: 20px; }
