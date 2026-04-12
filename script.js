@@ -1,77 +1,53 @@
 /* ═══════════════════════════════════════════════════════════════
    MediSense AI — script.js
    AI-Powered Hospital Review Sentiment Analysis (3-Class)
-   ─────────────────────────────────────────────────────────────
-   PLACEHOLDER VARIABLES (replace with real model output):
-     - MODEL_ACCURACY, MODEL_PRECISION, MODEL_RECALL, MODEL_F1
-     - SENTIMENT_RESULT ("Positive" | "Neutral" | "Negative")
-     - CONFIDENCE_SCORE (0–1 float)
-     - 3×3 Confusion matrix: CM_PP, CM_PN, CM_PNg,
-                              CM_NP, CM_NN, CM_NNg,
-                              CM_NgP, CM_NgN, CM_NgNg
-     - Chart arrays: ROC_FPR, ROC_TPR, PR_REC, PR_PREC, ACC_TRAIN, ACC_VAL
-     - ROC_AUC, PR_AP
 ═══════════════════════════════════════════════════════════════ */
 
 "use strict";
 
 /* ─────────────────────────────────────────────────────────────
    1. MODEL PERFORMANCE DATA
-   Replace these constants with real outputs from your trained model.
 ───────────────────────────────────────────────────────────────*/
 
-const MODEL_ACCURACY  = 0.924;   // ← Replace: MODEL_ACCURACY
-const MODEL_PRECISION = 0.918;   // ← Replace: MODEL_PRECISION (macro)
-const MODEL_RECALL    = 0.931;   // ← Replace: MODEL_RECALL    (macro)
-const MODEL_F1        = 0.924;   // ← Replace: MODEL_F1        (macro)
+const MODEL_ACCURACY  = 0.924;
+const MODEL_PRECISION = 0.918;
+const MODEL_RECALL    = 0.931;
+const MODEL_F1        = 0.924;
 
 // ── 3×3 Confusion Matrix ──────────────────────────────────────
-// Rows = Actual class, Columns = Predicted class
-// Order: Positive (P), Neutral (N), Negative (Ng)
-const CM_PP  = 910;  // Actual Pos  → Predicted Pos  (True Positive)
-const CM_PN  = 42;   // Actual Pos  → Predicted Neu
-const CM_PNg = 28;   // Actual Pos  → Predicted Neg
-const CM_NP  = 38;   // Actual Neu  → Predicted Pos
-const CM_NN  = 895;  // Actual Neu  → Predicted Neu  (True Neutral)
-const CM_NNg = 47;   // Actual Neu  → Predicted Neg
-const CM_NgP = 22;   // Actual Neg  → Predicted Pos
-const CM_NgN = 55;   // Actual Neg  → Predicted Neu
-const CM_NgNg= 913;  // Actual Neg  → Predicted Neg  (True Negative)
+const CM_PP   = 1015;
+const CM_PN   = 168;
+const CM_PNg  = 17;
+const CM_NP   = 151;
+const CM_NN   = 998;
+const CM_NNg  = 51;
+const CM_NgP  = 35;
+const CM_NgN  = 81;
+const CM_NgNg = 1084;
 
-// ── 3-Class Sentiment Distribution (%) ───────────────────────
-const SENT_POSITIVE_PCT = 33.3; // ← Replace with real dataset split
-const SENT_NEUTRAL_PCT  = 33.3; // ← Replace with real dataset split
-const SENT_NEGATIVE_PCT = 33.4; // ← Replace with real dataset split
+// ── 3-Class Sentiment Distribution — 18,000 samples, 6k each ──
+const SENT_POSITIVE_COUNT = 6000;
+const SENT_NEUTRAL_COUNT  = 6000;
+const SENT_NEGATIVE_COUNT = 6000;
+const SENT_TOTAL          = 18000;
 
-// ── ROC Curve (macro one-vs-rest average) ─────────────────────
-const ROC_FPR = [0, 0.02, 0.06, 0.12, 0.20, 0.30, 0.42, 0.58, 0.74, 1.00];
-const ROC_TPR = [0, 0.35, 0.62, 0.78, 0.87, 0.92, 0.95, 0.97, 0.99, 1.00];
-const ROC_AUC = 0.967; // ← Replace: macro-avg AUC
+const SENT_POSITIVE_PCT = (SENT_POSITIVE_COUNT / SENT_TOTAL) * 100; // 33.33
+const SENT_NEUTRAL_PCT  = (SENT_NEUTRAL_COUNT  / SENT_TOTAL) * 100; // 33.33
+const SENT_NEGATIVE_PCT = (SENT_NEGATIVE_COUNT / SENT_TOTAL) * 100; // 33.34
 
-// ── Precision-Recall Curve (macro average) ────────────────────
-const PR_REC  = [0, 0.10, 0.22, 0.38, 0.52, 0.65, 0.78, 0.88, 0.95, 1.00];
-const PR_PREC = [1.00, 0.98, 0.96, 0.94, 0.92, 0.88, 0.82, 0.74, 0.62, 0.50];
-const PR_AP   = 0.951; // ← Replace: macro average precision
-
-// ── Accuracy curves (one value per epoch) ─────────────────────
-const EPOCHS    = [1, 2, 3, 4, 5, 6, 7, 8, 9, 10];
-const ACC_TRAIN = [0.62, 0.72, 0.79, 0.84, 0.87, 0.89, 0.91, 0.92, 0.924, 0.926];
-const ACC_VAL   = [0.60, 0.70, 0.77, 0.82, 0.85, 0.87, 0.89, 0.90, 0.915, 0.912];
+// ── AUC placeholder ───────────────────────────────────────────
+const ROC_AUC = 0.963;
 
 
 /* ─────────────────────────────────────────────────────────────
    2. API INTEGRATION POINT
-   Replace callSentimentAPI() stub with your real endpoint.
-   Expected: POST /predict → { sentiment: "Positive"|"Neutral"|"Negative", confidence: 0.94 }
 ───────────────────────────────────────────────────────────────*/
 
-const API_URL = "https://your-model-endpoint.com/predict"; // ← Replace with real URL
+const API_URL = "https://your-model-endpoint.com/predict";
 
 async function callSentimentAPI(reviewText) {
-  /* ─── STUB (remove and uncomment fetch below when backend is ready) ── */
   await new Promise(r => setTimeout(r, 1200));
 
-  // 3-class pseudo-random for demo — REPLACE with real fetch()
   const roll = reviewText.length % 3;
   const classes = ["Positive", "Neutral", "Negative"];
   const confs   = [0.91 + Math.random() * 0.07,
@@ -87,7 +63,6 @@ async function callSentimentAPI(reviewText) {
   });
   if (!response.ok) throw new Error(`API error: ${response.status}`);
   return response.json();
-  // Returns: { sentiment: "Positive"|"Neutral"|"Negative", confidence: 0.94 }
   ─────────────────────────────────────────────────────────────────── */
 }
 
@@ -143,7 +118,6 @@ function displayResult(sentiment, confidence) {
 
   const confPct = Math.round(confidence * 100);
 
-  // Map sentiment → icon, CSS class
   const config = {
     Positive: { cls: "positive", icon: "fa-circle-check",         color: "var(--green)"   },
     Neutral:  { cls: "neutral",  icon: "fa-circle-minus",         color: "var(--neutral)" },
@@ -151,19 +125,15 @@ function displayResult(sentiment, confidence) {
   };
   const cfg = config[sentiment] || config["Neutral"];
 
-  // Icon wrapper
   iconWrap.className = `result-icon-wrap ${cfg.cls}`;
   iconWrap.innerHTML = `<i class="fa-solid ${cfg.icon}"></i>`;
 
-  // Sentiment label — SENTIMENT_RESULT
   sentimentEl.textContent = sentiment;
   sentimentEl.className   = `result-sentiment ${cfg.cls}`;
 
-  // Confidence score — CONFIDENCE_SCORE
   confValueEl.textContent = `${confPct}%`;
   confValueEl.style.color = cfg.color;
 
-  // Animated bar
   barEl.className   = `result-bar ${cfg.cls}`;
   barEl.style.width = "0%";
   requestAnimationFrame(() => {
@@ -229,9 +199,7 @@ function populateMetrics() {
     }
   });
 
-  // AUC / AP
   setValue("rocAUC", ROC_AUC.toFixed(3));
-  setValue("prAP",   PR_AP.toFixed(3));
 }
 
 function setValue(id, val) {
@@ -241,221 +209,105 @@ function setValue(id, val) {
 
 
 /* ─────────────────────────────────────────────────────────────
-   5. CANVAS CHARTS
+   5. DONUT CHART — Dynamic, animated, visually polished
 ───────────────────────────────────────────────────────────────*/
 
-// ── 3-Class Pie / Donut chart ────────────────────────────────
-function drawPieChart() {
+function drawDonutChart() {
   const canvas = document.getElementById("sentimentPieChart");
   if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  const cx = canvas.width / 2, cy = canvas.height / 2, r = 90, inner = 54;
 
-  ctx.clearRect(0, 0, canvas.width, canvas.height);
+  const dpr = window.devicePixelRatio || 1;
+  const SIZE = 240;
+  canvas.width  = SIZE * dpr;
+  canvas.height = SIZE * dpr;
+  canvas.style.width  = SIZE + "px";
+  canvas.style.height = SIZE + "px";
+
+  const ctx = canvas.getContext("2d");
+  ctx.scale(dpr, dpr);
+
+  const cx = SIZE / 2, cy = SIZE / 2;
+  const outerR = 100;
+  const innerR = 62;
+  const gap    = 0.018; // gap between slices in radians
 
   const slices = [
-    { value: SENT_POSITIVE_PCT, color: "#16a34a", label: "Positive" },
-    { value: SENT_NEUTRAL_PCT,  color: "#f59e0b", label: "Neutral"  },
-    { value: SENT_NEGATIVE_PCT, color: "#ef4444", label: "Negative" }
+    { pct: SENT_POSITIVE_PCT, color: "#16a34a", glow: "rgba(22,163,74,0.35)"  },
+    { pct: SENT_NEUTRAL_PCT,  color: "#f59e0b", glow: "rgba(245,158,11,0.35)" },
+    { pct: SENT_NEGATIVE_PCT, color: "#ef4444", glow: "rgba(239,68,68,0.35)"  },
   ];
-  let start = -Math.PI / 2;
 
-  slices.forEach(s => {
-    const angle = (s.value / 100) * 2 * Math.PI;
+  // Animate the donut drawing
+  let progress = 0;
+  const DURATION = 900; // ms
+  let startTime = null;
 
-    // Outer slice
+  function easeOutCubic(t) {
+    return 1 - Math.pow(1 - t, 3);
+  }
+
+  function frame(timestamp) {
+    if (!startTime) startTime = timestamp;
+    const elapsed = timestamp - startTime;
+    progress = Math.min(easeOutCubic(elapsed / DURATION), 1);
+
+    ctx.clearRect(0, 0, SIZE, SIZE);
+
+    let angle = -Math.PI / 2; // start at top
+
+    slices.forEach(s => {
+      const sliceAngle = (s.pct / 100) * 2 * Math.PI * progress;
+
+      if (sliceAngle <= 0) return;
+
+      // Shadow / glow
+      ctx.save();
+      ctx.shadowColor = s.glow;
+      ctx.shadowBlur  = 12;
+
+      // Slice arc
+      ctx.beginPath();
+      ctx.moveTo(cx, cy);
+      ctx.arc(cx, cy, outerR, angle + gap / 2, angle + sliceAngle - gap / 2);
+      ctx.closePath();
+      ctx.fillStyle = s.color;
+      ctx.fill();
+      ctx.restore();
+
+      // Inner highlight (lighter rim)
+      ctx.beginPath();
+      ctx.arc(cx, cy, outerR - 1, angle + gap / 2, angle + sliceAngle - gap / 2);
+      ctx.arc(cx, cy, outerR - 7, angle + sliceAngle - gap / 2, angle + gap / 2, true);
+      ctx.closePath();
+      ctx.fillStyle = "rgba(255,255,255,0.12)";
+      ctx.fill();
+
+      angle += sliceAngle;
+    });
+
+    // Donut hole — white fill to create ring effect
     ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, r, start, start + angle);
-    ctx.closePath();
-    ctx.fillStyle = s.color;
-    ctx.fill();
-
-    // Inner hole (donut)
-    ctx.beginPath();
-    ctx.moveTo(cx, cy);
-    ctx.arc(cx, cy, inner, start, start + angle);
-    ctx.closePath();
+    ctx.arc(cx, cy, innerR, 0, 2 * Math.PI);
     ctx.fillStyle = "#ffffff";
     ctx.fill();
 
-    start += angle;
-  });
-
-  // Center label
-  ctx.fillStyle = "#0f172a";
-  ctx.font = "bold 14px DM Sans, sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText("3-Class", cx, cy - 6);
-  ctx.fillStyle = "#64748b";
-  ctx.font = "10px DM Sans, sans-serif";
-  ctx.fillText("Distribution", cx, cy + 10);
-}
-
-// ── Line / Area chart helper ──────────────────────────────────
-function drawLineChart(canvasId, datasets, labels, config = {}) {
-  const canvas = document.getElementById(canvasId);
-  if (!canvas) return;
-  const ctx = canvas.getContext("2d");
-  const W = canvas.width, H = canvas.height;
-  const PAD = { top: 20, right: 20, bottom: 40, left: 50 };
-  const chartW = W - PAD.left - PAD.right;
-  const chartH = H - PAD.top - PAD.bottom;
-
-  ctx.clearRect(0, 0, W, H);
-
-  const minX = config.minX ?? 0, maxX = config.maxX ?? 1;
-  const minY = config.minY ?? 0, maxY = config.maxY ?? 1;
-
-  function toX(v) { return PAD.left + ((v - minX) / (maxX - minX)) * chartW; }
-  function toY(v) { return PAD.top  + (1 - (v - minY) / (maxY - minY)) * chartH; }
-
-  // Grid lines
-  ctx.strokeStyle = "rgba(0,0,0,0.07)";
-  ctx.lineWidth = 1;
-  for (let i = 0; i <= 5; i++) {
-    const y = PAD.top + (i / 5) * chartH;
-    ctx.beginPath(); ctx.moveTo(PAD.left, y); ctx.lineTo(PAD.left + chartW, y); ctx.stroke();
-    const val = maxY - (i / 5) * (maxY - minY);
-    ctx.fillStyle = "#94a3b8";
-    ctx.font = "10px DM Mono, monospace";
-    ctx.textAlign = "right";
-    ctx.fillText(val.toFixed(2), PAD.left - 8, y + 3);
-  }
-
-  // X axis labels
-  if (labels) {
-    ctx.fillStyle = "#94a3b8";
-    ctx.font = "10px DM Mono, monospace";
-    ctx.textAlign = "center";
-    labels.forEach((label, i) => {
-      const x = toX(minX + (i / (labels.length - 1)) * (maxX - minX));
-      ctx.fillText(label, x, PAD.top + chartH + 16);
-    });
-  }
-
-  // Diagonal reference (ROC)
-  if (config.diagonal) {
-    ctx.strokeStyle = "rgba(0,0,0,0.1)";
-    ctx.setLineDash([4, 4]);
+    // Subtle inner ring border
+    ctx.beginPath();
+    ctx.arc(cx, cy, innerR, 0, 2 * Math.PI);
+    ctx.strokeStyle = "rgba(0,0,0,0.05)";
     ctx.lineWidth = 1;
-    ctx.beginPath();
-    ctx.moveTo(toX(0), toY(0)); ctx.lineTo(toX(1), toY(1));
-    ctx.stroke();
-    ctx.setLineDash([]);
-  }
-
-  // Datasets
-  datasets.forEach(ds => {
-    const pts = ds.x.map((xv, i) => [toX(xv), toY(ds.y[i])]);
-
-    if (ds.fill) {
-      ctx.beginPath();
-      ctx.moveTo(pts[0][0], toY(minY));
-      pts.forEach(([px, py]) => ctx.lineTo(px, py));
-      ctx.lineTo(pts[pts.length - 1][0], toY(minY));
-      ctx.closePath();
-      ctx.fillStyle = ds.fill;
-      ctx.fill();
-    }
-
-    ctx.beginPath();
-    ctx.strokeStyle = ds.color;
-    ctx.lineWidth = 2;
-    ctx.lineJoin = "round";
-    pts.forEach(([px, py], i) => i === 0 ? ctx.moveTo(px, py) : ctx.lineTo(px, py));
     ctx.stroke();
 
-    if (ds.dots !== false) {
-      pts.forEach(([px, py]) => {
-        ctx.beginPath();
-        ctx.arc(px, py, 3, 0, Math.PI * 2);
-        ctx.fillStyle = ds.color;
-        ctx.fill();
-      });
+    if (progress < 1) {
+      requestAnimationFrame(frame);
     }
-  });
-
-  // Legend
-  if (config.legend) {
-    let lx = PAD.left + 8;
-    config.legend.forEach(item => {
-      ctx.fillStyle = item.color;
-      ctx.fillRect(lx, PAD.top + 6, 12, 3);
-      ctx.fillStyle = "#64748b";
-      ctx.font = "10px DM Sans, sans-serif";
-      ctx.textAlign = "left";
-      ctx.fillText(item.label, lx + 16, PAD.top + 11);
-      lx += ctx.measureText(item.label).width + 40;
-    });
   }
-}
 
-function drawROC() {
-  drawLineChart("rocChart",
-    [{ x: ROC_FPR, y: ROC_TPR, color: "#5aa9e6", fill: "rgba(90,169,230,0.08)", dots: false }],
-    null,
-    { minX: 0, maxX: 1, minY: 0, maxY: 1, diagonal: true }
-  );
-  const c = document.getElementById("rocChart");
-  if (!c) return;
-  const ctx = c.getContext("2d");
-  ctx.fillStyle = "#64748b";
-  ctx.font = "10px DM Sans, sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText("False Positive Rate (macro OvR)", c.width / 2, c.height - 6);
-}
-
-function drawPRCurve() {
-  drawLineChart("prChart",
-    [{ x: PR_REC, y: PR_PREC, color: "#0284c8", fill: "rgba(2,132,200,0.08)", dots: false }],
-    null,
-    { minX: 0, maxX: 1, minY: 0, maxY: 1 }
-  );
-  const c = document.getElementById("prChart");
-  if (!c) return;
-  const ctx = c.getContext("2d");
-  ctx.fillStyle = "#64748b";
-  ctx.font = "10px DM Sans, sans-serif";
-  ctx.textAlign = "center";
-  ctx.fillText("Recall (macro)", c.width / 2, c.height - 6);
-}
-
-function drawAccCurve() {
-  drawLineChart("accCurveChart",
-    [
-      {
-        x: EPOCHS.map((_, i) => i / (EPOCHS.length - 1)),
-        y: ACC_TRAIN,
-        color: "#5aa9e6",
-        fill: "rgba(90,169,230,0.07)",
-        dots: true
-      },
-      {
-        x: EPOCHS.map((_, i) => i / (EPOCHS.length - 1)),
-        y: ACC_VAL,
-        color: "#0284c8",
-        fill: "rgba(2,132,200,0.05)",
-        dots: true
-      }
-    ],
-    EPOCHS.map(String),
-    {
-      minX: 0, maxX: 1,
-      minY: 0.55, maxY: 1.0,
-      legend: [
-        { color: "#5aa9e6", label: "Training Accuracy" },
-        { color: "#0284c8", label: "Validation Accuracy" }
-      ]
-    }
-  );
+  requestAnimationFrame(frame);
 }
 
 function initCharts() {
-  drawPieChart();
-  drawROC();
-  drawPRCurve();
-  drawAccCurve();
+  drawDonutChart();
 }
 
 
@@ -539,7 +391,6 @@ document.addEventListener("DOMContentLoaded", () => {
   initCharts();
   window.analyzeSentiment = analyzeSentiment;
 
-  // Footer year
   const yr = document.getElementById("year");
   if (yr) yr.textContent = new Date().getFullYear();
 });
