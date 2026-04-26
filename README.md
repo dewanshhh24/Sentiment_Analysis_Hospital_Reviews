@@ -59,66 +59,6 @@ Performance comparison:
 
 The results demonstrate that the hybrid approach achieves performance comparable to fine-tuned transformers with lower computational cost.
 
-## Project Structure
-
-```
-MediSense-AI/
-│
-├── data/                # Dataset and preprocessing outputs
-├── notebooks/           # EDA and experimentation
-├── src/
-│   ├── preprocessing.py
-│   ├── embedding.py
-│   ├── train.py
-│   ├── evaluate.py
-│
-├── models/              # Saved models and embeddings
-├── results/             # Graphs and evaluation outputs
-├── requirements.txt
-└── README.md
-```
-
-## Installation
-
-Clone the repository:
-
-```
-git clone https://github.com/your-repository-link
-cd MediSense-AI
-```
-
-Install dependencies:
-
-```
-pip install -r requirements.txt
-```
-
-## Usage
-
-Run preprocessing:
-
-```
-python src/preprocessing.py
-```
-
-Generate embeddings:
-
-```
-python src/embedding.py
-```
-
-Train the model:
-
-```
-python src/train.py
-```
-
-Evaluate performance:
-
-```
-python src/evaluate.py
-```
-
 ## Applications
 
 * Healthcare feedback monitoring
